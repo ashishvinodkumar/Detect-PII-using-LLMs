@@ -1,8 +1,25 @@
 # Detect PII with a RAG based LLM
 
-### Breif Overview of Approach
+### Problem Statement
+BlogBot, an AI company, has identified PII data while training its GenAI model. They have reached out to us with a 'claim' comprising of where the PII data was observed. We need to validate this claim, i.e detect PII information in the underlying data, and confirm/deny the claim. Beyond the scope of this project: Resolve/Remove the PII conflicts within the dataset. 
 
-To goal of this project is to implement RAG with Context Relevance, Groundedness, and Answer Relevance, for effectively identifying PII data in any given dataset.
+### 3 Approaches to Potentially Solve the Problem
+1. Fine-Tune an LLM to accurately identify PII data.
+    - This solution requires at least 2-4 GPUs depending on the scale and size of the LLM that needs to be fine-tuned.
+    - This is a cost ineffective option, time-consuming, and not the right first step, especially since an Inference workflow has not yet been attempted.
+    - Only if there is a nuanced scenario that a general purpose LLM with Chain-of-Thought reasoning is unable to perform, will we consider fine-tuning an LLM.
+2. Utilize only an LLM with large context length for real-time PII detection.
+    - While this approach could work, maintaining large contexts could give rise to hallucination, and is also cost inefficient as large context lenghts would require more compute and/or GPUs.
+    - Most documents are large (GBs/TBs), so it is also computationally inefficient to store such large files in memory if the frequency of retrieval is not every few hours.
+3. Build a RAG based LLM Inference workflow with Prompt Engineering.
+    - This is an ideal first step, as we can get reasonably good performance and accuracy with identifying PII information in the underlying dataset without training any LLMs on expensive GPUs.
+    - Requires a deep understanding of Chain-Of-Thought (COT) reasoning, Few-Shot-Learning, Prompt Engineering, distributed programming for scale, and effective chunking strategies.
+  
+Approach 3 was chosen. The rest of the document ellaborates on this approach.
+
+### Brief Overview of Approach
+
+The goal of this project is to identify PII data in any given dataset.
 
 ![RAG Eval](https://github.com/user-attachments/assets/51005436-920b-4842-b8df-9693309c4969)
 
@@ -16,14 +33,14 @@ Answer Relevance
 Last, our response still needs to helpfully answer the original question. We can verify this by evaluating the relevance of the final response to the user input.
 
 
-# How?
+# Architecture of My Solution
 
 To implement this RAG LLM solution for PII clasificaiton, we effectively need an offline and online process as detailed below:
 
 ![RAG-Architecture](https://github.com/user-attachments/assets/284b4bf0-1dd2-4aea-b744-76ec99524842)
 
 #### Offline Backend Batch Workflow:
-- Each of the "Data Providers" that upload their datasets onto the platform, need to not only be catalogued for future consumption, but also ingested into a Vector Database to enable Retrieval Augmented Generation (RAG).
+- Each of the "Data Providers" that upload their datasets onto the platform need to not only be catalogued for future consumption, but also ingested into a Vector Database to enable Retrieval Augmented Generation (RAG).
 - The 'offline_insert.py' script parses through all available datasets, extracts metadata and prepares it for database insertion.
 - Furthermore, the offline process also includes chunking and embedding the data into Chroma DB's vector database with metadata centered around 'title' and 'publish_data' for faster and accurate retrieval. 
 - The offline workflow will run once every few hours to continually index new datasets as and when they are uploaded.
