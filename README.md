@@ -120,13 +120,13 @@ As can be observed, if there is PII data, then we retrieve the relevant context 
 
 # Next Steps
 
-I put together this application in a few hours on a Macbook Air with no GPUs, so I had to limit myself to a TinyLlama 1 Billion Parameter model. Having previously built many workflows like this for various use-cases, I can confidently say that bumping up the LLM from a TinyLlama 1B to Meta's Llama3.1 8B (or other such model) will yield incredible results for a PII classification problem with LLMs.
+I put together this application in a few hours on a Macbook Air, so I had to limit myself to a TinyLlama 1 Billion Parameter model. Having previously built many workflows like this for various use-cases with larger models, I can confidently say that bumping up the LLM from a TinyLlama 1B to Meta's Llama3.1 8B (or other such model) will yield MORE incredible results for a PII classification problem with LLMs.
 
-Furthermore, TinyLlama cannot effectively perform Chain-Of-Thought (COT) reasoning or Few-Shot-Learning, which is necessary for effectively categorizing responses in a streamlined binary output. As mentioned before, using Meta's Llama3.1 8B model with Few-Shot-Learning will be the ideal next step. We can also further control the response generation by using JSON based response guidelines, to enforce a specific formatted response such as {"PII": True/False, "Reasoning/Evidence": '...'}
+Furthermore, TinyLlama cannot perform effective Chain-Of-Thought (COT) reasoning and/oror Few-Shot-Learning with large contexts. As mentioned before, using Meta's Llama3.1 8B model with Few-Shot-Learning will be the ideal next step. We can also further control the response generation by using JSON based response guidelines, to enforce a specific formatted response such as {"PII": True/False, "Reasoning/Evidence": '...'}
 
 Is there an effective chunking strategy? The short answer is NO. However, one can make educated decisions based on the distribution of the underlying data to chunk meaningful datasets together with setting a generous text overlap. For this project, I mocked up data using TinyLlama 1B, which always repeatedly adds 'fictional/fake' identifiers before and after adding any PII data (for safety reasons). This makes chunking and effective response generation on synthetic data for PII identification a little tricky. 
 
-Next, is there a plan for scaling this solution? Yes, the 'Inference' class can easily be wrapped inside multiple Python MultiProcessing workers, that are always active in a while True loop, until torn down. A next step here would be to wrap the online_query's main function in the following architecture.
+Next, is there a plan for scaling this solution? Yes, the 'Inference' class can easily be wrapped inside multiple workers using Python MultiProcessing like below. Each worker is in a while loop that gets and processes new inputs/claims in real-time. A next step here would be to wrap the online_query's main function in the following architecture. Here is a sample of how that can be done on top of the existing solution.
 
 ```
 import multiprocessing as mp
@@ -142,10 +142,12 @@ input_queue.put([claim1, claim2, claim3, ...])
 outputs = response_queue.get()
 ```
 
-Finally, How do we go about evaluating performance and accuracy? 
+Finally, How do we go about evaluating performance and accuracy? We build out a comprehensive performance & accuracy tracking table with various LLMs, hyperparameters, and data chunking strategies, to evaluate the following:
 
 1. For context relevance, most Vector Databases like Qdrant and ChromaDB have a built-in Consine Similarity. We can evaluate the minimum needed metadata to consistently obtain the most rich vectors/context from the database. We can also experiment with other approaches such as Manhattan distance, Euclidian distance, Inner Product, and more to identify which metric provides the most optimal result. 
 
 2. For Groundedness, first we can use Prompt Engineering to force groundedness in the response by Few-Shot-Learning examples and explicitly enforcing LLM not use any information outside of the context provided, in generating a response. Furthermore, we can also use LLM-As-A-Judge with a more superior LLM to measure distribution in response across various LLMs, or we can calculate the faithfulness and context precision in relation to the underlying context. 
 
 3. For Answer Relevance, we can similarly measure the cosine similarity measure with a minimum threshold bar for 'correctness'. We can also use lightweight NLP techniques that count word affinity in response to query for additional validation.
+
+The resulting optimal configuration will be the candidate pipeline.
