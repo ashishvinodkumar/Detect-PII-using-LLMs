@@ -59,7 +59,7 @@ make offline_insert
 
 4. Query the Vector DB
 ```shell
-make only_query
+make online_query
 ```
 
 # Next Steps
