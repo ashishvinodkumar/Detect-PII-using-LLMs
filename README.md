@@ -56,7 +56,7 @@ To implement this RAG LLM solution for PII clasificaiton, we effectively need an
 - Specifically, based on the claim, we filter the vector db by the underlying source title and publish date metadata. This helps narrow down search space and improve accuracy. The top-n relevant chunks from the reduced search space is then processed to create a 'context' dataset. 
 - This context dataset is then passed onto the TinyLlama 1b model to arbitrate whether there is PII present in the dataset or not.
 
-### Steps to Run
+# Steps to Run
 1. Create Python Virtual Environment and Install Packages
 ```shell
 make venv
@@ -77,6 +77,13 @@ make offline_insert
 ```shell
 make online_query
 ```
+
+### Assumptions
+1. I have picked text data. This architecture can easily be ellaborated to vide, audio, and image.
+2. The 'make data'recipe creates synthetic data using TinyLlama 1B model. I am also using this model to generate metadata for the vector database to improve retrieval accuracy. The metadata is {'title': 'title', 'publish_date': '2025-04-19'}
+3. Another metadata field is 'is_pii'. This field is randomly being generated for 50% of blogs to handle the scenario that the 'Dataset has already been vetted'.
+4. I have used all open source frameworks with Python, VLLM, HuggingFace, and ChromaDB to build this solution.
+5. For the Data Model, specifically from a RAG & LLM point of view, it is desirable to have the data in a vector database with metadata, to enable faster chunk retrieval and similarity functions. For the question about the Eng team looking for feedback on their data model, keeping aside the question of 'where' the data should be stored, I feel that an argument could be made to store the 'flag'/'is_pii' feature in the vector database directly for faster LLM based lookup, since a query to the vector database is needed anyways for each PII arbitration. I am open to further discussing pros and cons here, to identify optimal storing of the 'flag'/'is_pii' metric, and seeing if we can further refine the existing data model.
 
 # Sample Input & Output
 
@@ -141,4 +148,4 @@ Finally, How do we go about evaluating performance and accuracy?
 
 2. For Groundedness, first we can use Prompt Engineering to force groundedness in the response by Few-Shot-Learning examples and explicitly enforcing LLM not use any information outside of the context provided, in generating a response. Furthermore, we can also use LLM-As-A-Judge with a more superior LLM to measure distribution in response across various LLMs, or we can calculate the faithfulness and context precision in relation to the underlying context. 
 
-3. For Answer Relevance, we can similarly measure the cosine similarity measure with a minimum threshold bar for 'correctness'. We can also use lightweight NLP techniques that count word affinity in response to query for additional validation. 
+3. For Answer Relevance, we can similarly measure the cosine similarity measure with a minimum threshold bar for 'correctness'. We can also use lightweight NLP techniques that count word affinity in response to query for additional validation.
