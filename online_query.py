@@ -58,7 +58,7 @@ def main():
 
     # Print output
     for i in range(0, len(outputs)):
-        output = outputs[i].outputs[0].text.strip()
+        output = outputs[i]
         print(f'{output=}')
 
 

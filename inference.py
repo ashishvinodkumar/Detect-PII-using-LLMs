@@ -75,7 +75,7 @@ class Inference:
                                 "title": {
                                     '$eq': title
                                 }
-                            }
+                            },
                         ]
                     }
         
@@ -83,9 +83,12 @@ class Inference:
             query_embeddings=[query_embedding],
             n_results=2,  # Retrieve top 3 most relevant blog posts
             where=filters,
+            include=["metadatas", 'documents']
         )
+
+        is_pii = results['metadatas'][0][0]['is_pii']
         retrieved_text = '\n\n'.join(results['documents'][0])
-        return retrieved_text
+        return retrieved_text, is_pii
 
     def claims_query(self, claims):
         responses = []
@@ -95,16 +98,18 @@ class Inference:
             issue = claim['why']
             instance = claim['how']
 
-            retrieved_text = self.get_relevant_chunks(title, publish_date, issue, instance)
-            # print(f'{retrieved_text=}')
+            retrieved_text, is_pii = self.get_relevant_chunks(title, publish_date, issue, instance)
+            if is_pii:
+                # Create a prompt with the retrieved context for RAG
+                prompt = f"Here is the datasets to check for PII:\n{retrieved_text}\n\n"
+                formatted_prompts = self.format_prompt(prompt)
 
-            # Create a prompt with the retrieved context for RAG
-            prompt = f"Here is the datasets to check for PII:\n{retrieved_text}\n\n"
-            formatted_prompts = self.format_prompt(prompt)
-            # print(f'\n\n{formatted_prompts=}\n\n')
+                # Use vLLM for inference
+                outputs = self.llm.generate(formatted_prompts, 
+                                            sampling_params=self.sampling_params)[0].outputs[0].text.strip()
+            else:
+                # The dataset has already been flagged as NO PII.
+                outputs = 'This dataset has already been vetted. There is no PII in the data.'
 
-            # Use vLLM for inference
-            outputs = self.llm.generate(formatted_prompts, 
-                                        sampling_params=self.sampling_params)
-            responses.append(outputs[0])
+            responses.append(outputs)
         return responses

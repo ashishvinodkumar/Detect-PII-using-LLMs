@@ -41,7 +41,7 @@ def insert_db(embedding_model_name, no_pii, pii):
     )
 
     # Helper function to process chunks
-    def process(dataset):
+    def process(dataset, is_pii):
         for (publish_date, title), text in dataset.items():
             # Chunk the data
             chunks = text_splitter.split_text(text)
@@ -56,13 +56,14 @@ def insert_db(embedding_model_name, no_pii, pii):
                     metadatas=[{
                         "title": title,
                         "publish_date": publish_date,
-                        "chunk_id": i
+                        "chunk_id": i,
+                        'is_pii': is_pii
                     }],
                     embeddings=[embedding]
                 )
 
-    process(no_pii)
-    process(pii)
+    process(no_pii, is_pii=False)
+    process(pii, is_pii=True)
 
 
 def main():
