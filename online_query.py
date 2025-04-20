@@ -11,17 +11,7 @@ def parse_args():
     return args
 
 def load_model_and_db(model_name, embedding_model_name):
-    system_message = """You are a helpful assistant trained to identify the presence of Personally Identifiable Information (PII) in datasets.
-Your task is to analyze the given text and determine if it contains any form of PII, such as names, email addresses, phone numbers, social security numbers, addresses, credit card information, or other identifiable details.
-Return a clear assessment:
-
-"PII Detected" along with a brief explanation of what type(s) of PII were found
-
-or "No PII Detected" if the data is clean.
-Do not make assumptions. Only base your response on the content provided."""
-
-    system_message = """You are tasked with identifying Personally Identifiable Information (PII) in datasets. PII refers to any information that can be used to identify a person, such as full names, addresses, phone numbers, email addresses, social security numbers, passport numbers, or any other data that could reasonably lead to identifying an individual. """
-
+    system_message = """You are an expert PII detector. Reply with "Yes" if PII is found or "No" if it is not found, and briefly list the PII if found"""
     # Load existing Chroma DB
     client = chromadb.PersistentClient(path="./chroma_db")
     db = client.get_collection("blog_collection")
@@ -47,13 +37,24 @@ def main():
     inf = load_model_and_db(args.model_name, args.embedding_model)
     
     # Perform RAG and validate claims on sample queries
-    claim = [{
+
+    claims = [
+        # PII - True Positive Example
+        {
         'where': ('meet miss sofia the fake travel blogger', '2025-03-23'), # Metadata (article publish_date, article title)
         'why': 'The combination of a full name, email, phone number, and city (New York City) could easily lead to the identification of Ava Jones',
         'how': "The blog clearly mentions Ava's full name, email, phone number, and city",
-    }]
+        },
 
-    outputs = inf.claims_query(claim)
+        # No PII - False Positive Example
+        {
+        'where': ('5 mustvisit destinations in europe for a memorable trip', '2025-03-24'), # Metadata (article publish_date, article title)
+        'why': 'The combination of a full name, email, phone number, and city (New York City) could easily lead to the identification of Ava Jones',
+        'how': "The blog clearly mentions Ava's full name, email, phone number, and city",
+        },
+    ]
+
+    outputs = inf.claims_query(claims)
 
     # Print output
     for i in range(0, len(outputs)):

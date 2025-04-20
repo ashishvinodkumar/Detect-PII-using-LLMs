@@ -25,10 +25,6 @@ class Inference:
         self.llm, self.sampling_params = self.load_model()
 
     def load_model(self):
-        use_mps = torch.backends.mps.is_available()
-        device_type = "mps" if use_mps else "cpu"
-        print(f"Using device: {device_type}")
-
         # Initialize LLM
         llm = LLM(model=self.model_name, 
                 download_dir="./models",
@@ -92,6 +88,7 @@ class Inference:
         return retrieved_text
 
     def claims_query(self, claims):
+        responses = []
         for claim in claims:
             title = claim['where'][0]
             publish_date = claim['where'][1]
@@ -99,14 +96,15 @@ class Inference:
             instance = claim['how']
 
             retrieved_text = self.get_relevant_chunks(title, publish_date, issue, instance)
-            print(f'{retrieved_text=}')
+            # print(f'{retrieved_text=}')
 
             # Create a prompt with the retrieved context for RAG
-            prompt = f"Here is the datasets to check for PII:\n{retrieved_text}\n\nPlease analyze and indicate if there is any PII present in this dataset.'"
+            prompt = f"Here is the datasets to check for PII:\n{retrieved_text}\n\n"
             formatted_prompts = self.format_prompt(prompt)
-            print(f'\n\n{formatted_prompts=}\n\n')
+            # print(f'\n\n{formatted_prompts=}\n\n')
 
             # Use vLLM for inference
             outputs = self.llm.generate(formatted_prompts, 
                                         sampling_params=self.sampling_params)
-            return outputs
+            responses.append(outputs[0])
+        return responses
