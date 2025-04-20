@@ -108,6 +108,8 @@ output2:
 'This dataset has already been vetted. There is no PII in the data.'
 ```
 
+As can be observed, if there is PII data, then we retrieve the relevant context and generate an LLM response with a decision and a summary of where the PII occurred. If the dataset has already been flagged as No PII, then even if there is a new claim, we return an automated response saying that the 'Dataset has been vetted. There is no PII.'
+
 
 # Next Steps
 
