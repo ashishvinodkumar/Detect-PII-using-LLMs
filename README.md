@@ -4,6 +4,8 @@
 
 To goal of this project is to implement RAG with Context Relevance, Groundedness, and Answer Relevance, for effectively identifying PII data in any given dataset.
 
+![RAG Eval](https://github.com/user-attachments/assets/51005436-920b-4842-b8df-9693309c4969)
+
 Context Relevance
 The first step of any RAG application is retrieval; to verify the quality of our retrieval, we want to make sure that each chunk of context is relevant to the input query to prevent hallucination. 
 
@@ -14,9 +16,11 @@ Answer Relevance
 Last, our response still needs to helpfully answer the original question. We can verify this by evaluating the relevance of the final response to the user input.
 
 
-### How?
+# How?
 
-To implement this RAG LLM solution for PII clasificaiton, we effectively need an offline and online process. 
+To implement this RAG LLM solution for PII clasificaiton, we effectively need an offline and online process as detailed below:
+
+![RAG-Architecture](https://github.com/user-attachments/assets/284b4bf0-1dd2-4aea-b744-76ec99524842)
 
 #### Offline Backend Batch Workflow:
 - Each of the "Data Providers" that upload their datasets onto the platform, need to not only be catalogued for future consumption, but also ingested into a Vector Database to enable Retrieval Augmented Generation (RAG).
@@ -58,15 +62,15 @@ make offline_insert
 make only_query
 ```
 
-### Obvious Flaws/Next Steps
+# Next Steps
 
-I put together this application in a few hours on a Macbook Air with no GPUs, so I had to limit myself to a TinyLlama 1 Billion Parameter model. Having previously built many workflows like this for various use-cases, I can confidently say that bumping up the LLM from a TinyLlama 1B to Meta's Llama3.1 8B (or other such model), which requires a single Nvidia A100 GPU, will yield incredible results for a PII classification problem with LLMs.
+I put together this application in a few hours on a Macbook Air with no GPUs, so I had to limit myself to a TinyLlama 1 Billion Parameter model. Having previously built many workflows like this for various use-cases, I can confidently say that bumping up the LLM from a TinyLlama 1B to Meta's Llama3.1 8B (or other such model) will yield incredible results for a PII classification problem with LLMs.
 
-Furthermore, TinyLlama cannot effectively perform Chain-Of-Thought (COT) reasoning or Few-Shot-Learning, which is necessary for effectively categorizing responses in a streamlined binary output. As mentioned before, using Meta's Llama3.1 8B model with Few-Shot-Learning will be the ideal next step. We can also further control the response generation by using JSON based response guidelines, to enforce a specific formatted response such as {"PII": True/False, "Reasoning/Evidence": ''}
+Furthermore, TinyLlama cannot effectively perform Chain-Of-Thought (COT) reasoning or Few-Shot-Learning, which is necessary for effectively categorizing responses in a streamlined binary output. As mentioned before, using Meta's Llama3.1 8B model with Few-Shot-Learning will be the ideal next step. We can also further control the response generation by using JSON based response guidelines, to enforce a specific formatted response such as {"PII": True/False, "Reasoning/Evidence": '...'}
 
 Is there an effective chunking strategy? The short answer is NO. However, one can make educated decisions based on the distribution of the underlying data to chunk meaningful datasets together with setting a generous text overlap. For this project, I mocked up data using TinyLlama 1B, which always repeatedly adds 'fictional/fake' identifiers before and after adding any PII data (for safety reasons). This makes chunking and effective response generation on synthetic data for PII identification a little tricky. 
 
-Next, s there a plan for scaling this solution? Yes, the 'Inference' class can easily be wrapped inside multiple Python MultiProcessing workers, that are always active in a while True loop, until torn down. A next step here would be to wrap the online_query's main function in the following architecture.
+Next, is there a plan for scaling this solution? Yes, the 'Inference' class can easily be wrapped inside multiple Python MultiProcessing workers, that are always active in a while True loop, until torn down. A next step here would be to wrap the online_query's main function in the following architecture.
 
 ```
 import multiprocessing as mp
