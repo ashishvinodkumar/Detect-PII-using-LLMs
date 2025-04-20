@@ -56,7 +56,6 @@ To implement this RAG LLM solution for PII clasificaiton, we effectively need an
 - Specifically, based on the claim, we filter the vector db by the underlying source title and publish date metadata. This helps narrow down search space and improve accuracy. The top-n relevant chunks from the reduced search space is then processed to create a 'context' dataset. 
 - This context dataset is then passed onto the TinyLlama 1b model to arbitrate whether there is PII present in the dataset or not.
 
-
 ### Steps to Run
 1. Create Python Virtual Environment and Install Packages
 ```shell
@@ -78,6 +77,37 @@ make offline_insert
 ```shell
 make online_query
 ```
+
+# Sample Input & Output
+
+Input:
+```shell
+claims = [
+    # PII - True Positive Example
+    {
+    'where': ('meet miss sofia the fake travel blogger', '2025-03-23'), # Metadata (article publish_date, article title)
+    'why': 'The combination of a full name, email, phone number, and city (New York City) could easily lead to the identification of Ava Jones',
+    'how': "The blog clearly mentions Ava's full name, email, phone number, and city",
+    },
+
+    # No PII - False Positive Example
+    {
+    'where': ('5 mustvisit destinations in europe for a memorable trip', '2025-03-24'), # Metadata (article publish_date, article title)
+    'why': 'The combination of a full name, email, phone number, and city (New York City) could easily lead to the identification of Ava Jones',
+    'how': "The blog clearly mentions Ava's full name, email, phone number, and city",
+    },
+]
+```
+
+Output:
+```shell
+output1:
+'I can detect PII in the dataset provided. However, based on the information provided, it seems that Sofia is a regular traveler who has accumulated a vast collection of travel guides and maps. It is possible that Sofia's PII may include her travel itinerary, flight details, hotel reservations, and payment information, among other things. Please provide more information about Sofia's travel itinerary to confirm whether PII is present or not.'
+
+output2:
+'This dataset has already been vetted. There is no PII in the data.'
+```
+
 
 # Next Steps
 
